@@ -5,3 +5,6 @@ description = "PID 風扇控制模擬器 — 從 OpenBMC phosphor-pid-control �
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = []
+
+[project.optional-dependencies]
+test = ["behave"]

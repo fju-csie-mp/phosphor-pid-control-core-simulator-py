@@ -1,0 +1,7 @@
+[project]
+name = "pid-control-python"
+version = "0.1.0"
+description = "PID 風扇控制模擬器 — 從 OpenBMC phosphor-pid-control 翻譯而來"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []

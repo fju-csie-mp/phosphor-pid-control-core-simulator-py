@@ -1,0 +1,101 @@
+{
+  "sensors": {
+    "temp_cpu0": {
+      "type": "temp",
+      "readPath": "",
+      "writePath": "",
+      "min": 0,
+      "max": 100,
+      "timeout": 2,
+      "simulation": {
+        "baseTemp": 50.0,
+        "amplitude": 12.0,
+        "noise": 0.5,
+        "period": 30.0
+      }
+    },
+    "temp_cpu1": {
+      "type": "temp",
+      "readPath": "",
+      "writePath": "",
+      "min": 0,
+      "max": 100,
+      "timeout": 2,
+      "simulation": {
+        "baseTemp": 45.0,
+        "amplitude": 8.0,
+        "noise": 0.3,
+        "period": 25.0
+      }
+    },
+    "fan0": {
+      "type": "fan",
+      "readPath": "",
+      "writePath": "",
+      "min": 0,
+      "max": 255,
+      "timeout": 0
+    },
+    "fan1": {
+      "type": "fan",
+      "readPath": "",
+      "writePath": "",
+      "min": 0,
+      "max": 255,
+      "timeout": 0
+    }
+  },
+  "zones": {
+    "0": {
+      "zone_config": {
+        "minThermalOutput": 3000.0,
+        "failsafePercent": 75.0,
+        "cycleIntervalTimeMS": 100,
+        "updateThermalsTimeMS": 1000
+      },
+      "pids": {
+        "thermal_cpu": {
+          "type": "temp",
+          "inputs": ["temp_cpu0", "temp_cpu1"],
+          "setpoint": 70.0,
+          "pid": {
+            "samplePeriod": 1.0,
+            "proportionalCoeff": 100.0,
+            "integralCoeff": 2.0,
+            "derivativeCoeff": 0.0,
+            "feedFwdOffset": 0.0,
+            "feedFwdGain": 0.0,
+            "integralLimit_min": 0.0,
+            "integralLimit_max": 10000.0,
+            "outLim_min": 3000.0,
+            "outLim_max": 10000.0,
+            "slewNeg": 0.0,
+            "slewPos": 0.0,
+            "positiveHysteresis": 0.0,
+            "negativeHysteresis": 0.0
+          }
+        },
+        "fan_pid": {
+          "type": "fan",
+          "inputs": ["fan0", "fan1"],
+          "pid": {
+            "samplePeriod": 0.1,
+            "proportionalCoeff": 0.01,
+            "integralCoeff": 0.001,
+            "derivativeCoeff": 0.0,
+            "feedFwdOffset": 0.0,
+            "feedFwdGain": 0.0,
+            "integralLimit_min": 0.0,
+            "integralLimit_max": 100.0,
+            "outLim_min": 20.0,
+            "outLim_max": 100.0,
+            "slewNeg": 0.0,
+            "slewPos": 0.0,
+            "positiveHysteresis": 0.0,
+            "negativeHysteresis": 0.0
+          }
+        }
+      }
+    }
+  }
+}

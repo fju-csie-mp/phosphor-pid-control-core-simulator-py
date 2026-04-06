@@ -49,6 +49,15 @@
 | 手動模式 | Manual Mode | 管理員手動控制風扇轉速，PID 停止計算。 |
 | Redundant Write | Redundant Write | 從手動模式切回自動模式時，強制寫入一次風扇 PWM，確保風扇值與 PID 計算同步。 |
 
+## 通訊與並行
+
+| 術語 | 英文 | 定義 |
+|------|------|------|
+| D-Bus | D-Bus | Linux 上的行程間通訊（IPC）機制。原始 C++ 版本中，感測器 daemon（phosphor-hwmon）和風扇控制 daemon（swampd）透過 D-Bus 的 signal 機制非同步溝通。Python 版用 Queue 模擬。 |
+| Queue | Queue（佇列） | Thread-safe 的訊息佇列。一端放入資料（put），另一端取出（get）。用來取代 D-Bus signal，讓 Sensor Thread 和 Zone Thread 之間非同步傳遞感測器值。 |
+| Sensor Thread | Sensor Thread | 獨立的執行緒，負責定期產生模擬感測器讀數並透過 Queue 發送給 Zone。對應原始架構中的 phosphor-hwmon daemon。 |
+| Zone Thread | Zone Thread | 每個 Zone 各自的執行緒，從 Queue 接收感測器值、執行 PID 計算、輸出風扇 PWM。對應原始架構中 swampd 為每個 Zone 建立的 async timer。 |
+
 ## Thermal 計算類型
 
 | 術語 | 英文 | 定義 |

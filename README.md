@@ -74,7 +74,20 @@ uv run --extra test behave -v
 
 每個 Use Case 按 NEA 三段法撰寫：N = 正常處理、E = 異常處理、A = 替代處理。
 
-術語定義見 [doc/glossary.md](doc/glossary.md)。
+術語定義見 [doc/glossary.md](doc/glossary.md)，系統架構見 [doc/architecture.md](doc/architecture.md)。
+
+## 架構對照
+
+原始 C++ 中，感測器和 PID 控制是不同的 daemon，透過 D-Bus 非同步溝通。本專案用 `threading` + `queue.Queue` 模擬這個架構：
+
+| 原始 C++ | Python 版 |
+|----------|-----------|
+| phosphor-hwmon (感測器 daemon) | Sensor Thread |
+| D-Bus signal | `queue.Queue` |
+| swampd (每個 Zone 的 async timer) | Zone Thread |
+| sysfs 寫入 | `SimulatedFan.write()` |
+
+詳細架構說明見 [doc/architecture.md](doc/architecture.md)。
 
 ## 專案結構
 

@@ -46,7 +46,7 @@ main thread
 - 沒有模擬 D-Bus 的 publish/subscribe
 - 可以跑、可以看 PID 收斂，但架構上跟原始版本差異大
 
-## 目標 Python 版本（v2 — threading + Queue）
+## Python v2（threading + Queue）— 已實作
 
 用 threading + Queue 模擬原始架構中 D-Bus signal 的非同步溝通：
 
@@ -90,3 +90,22 @@ Sensor Thread                    Zone Thread (每個 Zone 一個)
 | Adapter | ReadInterface / WriteInterface | ✓ | |
 | Null Object | ReadOnly（未寫入端的佔位） | ✓ | |
 | Observer | 感測器 → Queue → Zone | | ✓ |
+
+### 執行方式
+
+```bash
+# v1: 直接呼叫模式（單 thread，用於 BDD 測試和簡單執行）
+uv run main.py --cycles 100
+
+# v2: 多 Thread 模式（Sensor Thread + Zone Thread，模擬 D-Bus 架構）
+uv run main.py --threaded
+```
+
+### 關鍵檔案
+
+| 檔案 | 角色 |
+|------|------|
+| `sensor_thread.py` | Sensor Thread：定期讀感測器，put 到各 Zone 的 Queue（≈ phosphor-hwmon） |
+| `zone.py` → `drain_queue()` | Zone 從 Queue 取值更新快取（≈ DbusPassive 收到 D-Bus signal） |
+| `pidloop.py` → `pid_control_loop_threaded()` | Zone Thread 的主迴圈（≈ swampd 的 async timer） |
+| `main.py` → `_run_threaded()` | 啟動所有 Thread，處理 Ctrl+C 優雅關閉 |

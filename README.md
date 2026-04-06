@@ -43,6 +43,9 @@ uv run main.py --cycles 200 --print-interval 5
 
 # 無限迴圈模式，按 Ctrl+C 停止
 uv run main.py
+
+# v2 多 Thread 模式（Sensor Thread + Zone Thread，模擬 D-Bus 架構）
+uv run main.py --threaded
 ```
 
 ## 執行測試
@@ -70,6 +73,7 @@ uv run --extra test behave -v
 | UC4 | 手動模式切換 | N×2, E×1, A×1 |
 | UC6 | JSON 設定檔載入 (Factory Method) | N×2, E×2, A×1 |
 | UC11 | Thermal 計算類型選擇 (Strategy) | N×3, E×1, A×1 |
+| UC10 | 多 Zone 獨立控制 (Concurrency) | N×1, E×1, A×1 |
 | UC14 | Stepwise 階梯控制 (Strategy) | N×3, E×1, A×2 |
 
 每個 Use Case 按 NEA 三段法撰寫：N = 正常處理、E = 異常處理、A = 替代處理。
@@ -109,8 +113,9 @@ pid_control/
 │   └── stepwise_controller.py   # 階梯控制器           ← pid/stepwisecontroller.cpp
 ├── sensors/
 │   └── sensor.py                # 感測器基底 + 模擬實作  ← sensors/ + dbus/ + sysfs/
+├── sensor_thread.py             # Sensor Thread        ← phosphor-hwmon daemon
 ├── zone.py                      # Zone 區域管理        ← pid/zone.cpp
-├── pidloop.py                   # 控制迴圈             ← pid/pidloop.cpp
+├── pidloop.py                   # 控制迴圈 (v1+v2)     ← pid/pidloop.cpp
 └── config_loader.py             # JSON 設定載入        ← buildjson + builder
 features/                        # BDD 測試 (behave/Cucumber)
 ├── uc01_normal_pid_control.feature
@@ -119,6 +124,7 @@ features/                        # BDD 測試 (behave/Cucumber)
 ├── uc04_manual_mode.feature
 ├── uc06_json_config_loading.feature
 ├── uc11_thermal_type_strategy.feature
+├── uc10_multi_zone.feature
 ├── uc14_stepwise_control.feature
 └── steps/                       # Step definitions
 ```

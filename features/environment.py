@@ -18,3 +18,5 @@ def before_scenario(context, scenario):
     context.thermal_input_value = None
     context.fan_pwm_before = {}
     context.stepwise_output = None
+    context._multi_mgr = None
+    context._multi_zones = {}

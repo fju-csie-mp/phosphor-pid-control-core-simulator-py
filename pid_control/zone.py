@@ -23,6 +23,7 @@ ModeObject（D-Bus 物件），這裡我們只保留控制邏輯。
 from __future__ import annotations
 
 import math
+import queue
 import sys
 from datetime import datetime
 
@@ -104,6 +105,10 @@ class Zone:
         # 控制器清單
         self._fans: list[Controller] = []
         self._thermals: list[Controller] = []
+
+        # Queue（用於 threading 模式，接收 SensorThread 的感測器更新）
+        # 在直接呼叫模式（BDD 測試）下不使用
+        self._sensor_queue: queue.Queue = queue.Queue()
 
     # =========================================================================
     # Zone 基本資訊
@@ -256,6 +261,57 @@ class Zone:
         對應 C++: DbusPidZone::updateSensors() (zone.cpp:495-501)
         """
         self._process_sensor_inputs(self._thermal_inputs)
+
+    # =========================================================================
+    # Queue 模式的感測器更新（用於 threading 模式）
+    # =========================================================================
+
+    def get_sensor_queue(self) -> queue.Queue:
+        """取得此 Zone 的感測器更新 Queue（供 SensorThread 使用）"""
+        return self._sensor_queue
+
+    def drain_queue(self) -> None:
+        """
+        從 Queue 取出所有感測器更新，寫入快取並檢查 failsafe。
+
+        對應原始架構: DbusPassive 收到 D-Bus signal 後更新快取。
+
+        這是 threading 模式下取代 update_sensors() / update_fan_telemetry()
+        的方法。SensorThread 把感測器值 put 到 Queue，Zone Thread 用
+        drain_queue() 一次取出所有累積的值。
+
+        Observer Pattern 的「通知處理」就在這裡：
+          - SensorThread publish（put）→ Zone subscribe（drain_queue）
+        """
+        from pid_control.sensor_thread import SensorUpdate
+
+        while True:
+            try:
+                update: SensorUpdate = self._sensor_queue.get_nowait()
+            except queue.Empty:
+                break
+
+            # 更新快取
+            self._cached_values[update.name] = ValueCacheEntry(
+                scaled=update.value, unscaled=update.unscaled
+            )
+
+            # 檢查感測器是否故障
+            if update.failed:
+                self._mark_sensor_missing(update.name, update.fail_reason)
+            else:
+                # 檢查超時
+                sensor = self._mgr.get_sensor(update.name)
+                timeout = sensor.get_timeout()
+                if timeout != 0:
+                    duration = (datetime.now() - update.timestamp).total_seconds()
+                    if duration >= timeout:
+                        self._mark_sensor_missing(update.name, "感測器超時")
+                    elif update.name in self._fail_safe_sensors:
+                        del self._fail_safe_sensors[update.name]
+                else:
+                    if update.name in self._fail_safe_sensors:
+                        del self._fail_safe_sensors[update.name]
 
     # =========================================================================
     # Setpoint 管理

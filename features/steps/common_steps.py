@@ -89,7 +89,8 @@ def step_add_fan_pid(context):
 @given('感測器 "{name}" 讀數為 {value}')
 @when('感測器 "{name}" 讀數為 {value}')
 def step_set_sensor_reading(context, name, value):
-    sensor = context.sensor_manager.get_sensor(name)
+    mgr = getattr(context, '_multi_mgr', None) or context.sensor_manager
+    sensor = mgr.get_sensor(name)
     if value.strip().lower() == "nan":
         _override_sensor_read(sensor, float("nan"))
     else:
@@ -103,7 +104,8 @@ def step_set_sensor_reading(context, name, value):
 @given('感測器 "{name}" 標記為故障')
 @when('感測器 "{name}" 標記為故障')
 def step_mark_sensor_failed(context, name):
-    sensor = context.sensor_manager.get_sensor(name)
+    mgr = getattr(context, '_multi_mgr', None) or context.sensor_manager
+    sensor = mgr.get_sensor(name)
     sensor.set_failed(True, "模擬故障")
 
 
